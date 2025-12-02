@@ -15,15 +15,15 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.alistwithdetails.data.model.Repo
-import com.example.alistwithdetails.data.repository.MockRepoRepository
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RepoDetailsScreen(
-    repoId: Long,
+    owner: String,
+    repoName: String,
     navController: NavController,
     viewModel: RepoDetailsViewModel = viewModel(
-        factory = RepoDetailsViewModelFactory(repoId, MockRepoRepository())
+        factory = RepoDetailsViewModelFactory(owner, repoName)
     )
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -31,7 +31,7 @@ fun RepoDetailsScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(text = uiState.repo?.name ?: "Details") },
+                title = { Text(text = uiState.repo?.name ?: repoName) },
                 navigationIcon = {
                     IconButton(onClick = { navController.navigateUp() }) {
                         Icon(
@@ -54,11 +54,9 @@ fun RepoDetailsScreen(
                     CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
                 }
                 uiState.error != null -> {
-                    Text(
-                        text = uiState.error!!,
-                        modifier = Modifier.align(Alignment.Center),
-                        color = MaterialTheme.colorScheme.error
-                    )
+                    ErrorState(errorMessage = uiState.error!!) {
+                        viewModel.loadRepoDetails() // Retry
+                    }
                 }
                 uiState.repo != null -> {
                     RepoDetailsContent(repo = uiState.repo!!)
@@ -73,7 +71,8 @@ fun RepoDetailsContent(repo: Repo) {
     Column(modifier = Modifier.fillMaxSize()) {
         Text(text = repo.name, style = MaterialTheme.typography.headlineLarge)
         Spacer(modifier = Modifier.height(8.dp))
-        Text(text = "by ${repo.owner}", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+        // Use repo.owner.login because owner is now an object
+        Text(text = "by ${repo.owner.login}", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
         Spacer(modifier = Modifier.height(16.dp))
         Text(text = repo.description ?: "No description available.", style = MaterialTheme.typography.bodyLarge)
         Spacer(modifier = Modifier.height(16.dp))
