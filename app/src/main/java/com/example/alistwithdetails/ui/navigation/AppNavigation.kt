@@ -32,9 +32,9 @@ sealed class Screen(val route: String) {
     object ReposList : Screen("repos_list")
     object Search : Screen("search")
     object Profile : Screen("profile")
-    object RepoDetails : Screen("repo_details/{repoId}") {
-        fun withArgs(repoId: Long): String {
-            return "repo_details/$repoId"
+    object RepoDetails : Screen("repo_details/{owner}/{repoName}") {
+        fun withArgs(owner: String, repoName: String): String {
+            return "repo_details/$owner/$repoName"
         }
     }
 }
@@ -53,10 +53,14 @@ fun AppNavigation(navController: NavHostController, innerPadding: PaddingValues)
         composable(Screen.Profile.route) { ProfileScreen() }
         composable(
             route = Screen.RepoDetails.route,
-            arguments = listOf(navArgument("repoId") { type = NavType.LongType })
+            arguments = listOf(
+                navArgument("owner") { type = NavType.StringType },
+                navArgument("repoName") { type = NavType.StringType }
+            )
         ) { backStackEntry ->
-            val repoId = backStackEntry.arguments?.getLong("repoId") ?: -1L
-            RepoDetailsScreen(repoId = repoId, navController = navController)
+            val owner = backStackEntry.arguments?.getString("owner") ?: ""
+            val repoName = backStackEntry.arguments?.getString("repoName") ?: ""
+            RepoDetailsScreen(owner = owner, repoName = repoName, navController = navController)
         }
     }
 }
