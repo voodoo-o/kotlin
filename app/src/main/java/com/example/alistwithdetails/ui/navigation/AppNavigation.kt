@@ -3,13 +3,9 @@ package com.example.alistwithdetails.ui.navigation
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.List
-import androidx.compose.material.icons.filled.Search
-import androidx.compose.material3.Icon
-import androidx.compose.material3.NavigationBar
-import androidx.compose.material3.NavigationBarItem
-import androidx.compose.material3.Text
+import androidx.compose.material.icons.filled.Star
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
@@ -18,23 +14,21 @@ import androidx.navigation.NavController
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
-import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
-import androidx.navigation.navArgument
-import com.example.alistwithdetails.ui.screens.ProfileScreen
+import com.example.alistwithdetails.ui.screens.FavoritesScreen
 import com.example.alistwithdetails.ui.screens.RepoDetailsScreen
 import com.example.alistwithdetails.ui.screens.ReposListScreen
-import com.example.alistwithdetails.ui.screens.SearchScreen
+import com.example.alistwithdetails.ui.screens.SettingsScreen
 
 sealed class Screen(val route: String) {
     object ReposList : Screen("repos_list")
-    object Search : Screen("search")
-    object Profile : Screen("profile")
-    object RepoDetails : Screen("repo_details/{repoId}") {
-        fun withArgs(repoId: Long): String {
-            return "repo_details/$repoId"
+    object Favorites : Screen("favorites")
+    object Settings : Screen("settings")
+    object RepoDetails : Screen("repo_details/{owner}/{repoName}") {
+        fun withArgs(owner: String, repoName: String): String {
+            return "repo_details/$owner/$repoName"
         }
     }
 }
@@ -49,24 +43,23 @@ data class BottomNavItem(
 fun AppNavigation(navController: NavHostController, innerPadding: PaddingValues) {
     NavHost(navController, startDestination = Screen.ReposList.route, modifier = Modifier.padding(innerPadding)) {
         composable(Screen.ReposList.route) { ReposListScreen(navController) }
-        composable(Screen.Search.route) { SearchScreen() }
-        composable(Screen.Profile.route) { ProfileScreen() }
+        composable(Screen.Favorites.route) { FavoritesScreen(navController) }
+        composable(Screen.Settings.route) { SettingsScreen(navController) }
         composable(
             route = Screen.RepoDetails.route,
-            arguments = listOf(navArgument("repoId") { type = NavType.LongType })
         ) { backStackEntry ->
-            val repoId = backStackEntry.arguments?.getLong("repoId") ?: -1L
-            RepoDetailsScreen(repoId = repoId, navController = navController)
+            RepoDetailsScreen(navController = navController)
         }
     }
 }
 
 @Composable
-fun BottomNavigationBar(navController: NavController) {
+fun BottomNavigationBar(
+    navController: NavController
+) {
     val items = listOf(
         BottomNavItem("Repositories", Icons.Default.List, Screen.ReposList.route),
-        BottomNavItem("Search", Icons.Default.Search, Screen.Search.route),
-        BottomNavItem("Profile", Icons.Default.AccountCircle, Screen.Profile.route)
+        BottomNavItem("Favorites", Icons.Default.Star, Screen.Favorites.route)
     )
 
     val navBackStackEntry by navController.currentBackStackEntryAsState()
@@ -76,10 +69,11 @@ fun BottomNavigationBar(navController: NavController) {
     if (shouldShowBottomBar) {
         NavigationBar {
             items.forEach { item ->
+                val isSelected = currentDestination?.hierarchy?.any { it.route == item.route } == true
                 NavigationBarItem(
                     icon = { Icon(item.icon, contentDescription = item.label) },
                     label = { Text(item.label) },
-                    selected = currentDestination?.hierarchy?.any { it.route == item.route } == true,
+                    selected = isSelected,
                     onClick = {
                         navController.navigate(item.route) {
                             popUpTo(navController.graph.findStartDestination().id) {
