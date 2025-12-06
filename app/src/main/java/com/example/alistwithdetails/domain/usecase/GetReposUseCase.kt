@@ -2,8 +2,9 @@ package com.example.alistwithdetails.domain.usecase
 
 import com.example.alistwithdetails.data.model.Repo
 import com.example.alistwithdetails.data.repository.RepoRepository
+import javax.inject.Inject
 
-class GetReposUseCase(private val repoRepository: RepoRepository) {
+class GetReposUseCase @Inject constructor(private val repoRepository: RepoRepository) {
 
     suspend fun execute(user: String): Result<List<Repo>> {
         return try {
